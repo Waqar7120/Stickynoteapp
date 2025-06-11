@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sticky Notes App</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #fdf6e3;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+    }
+    #newNote {
+      width: 100%;
+      max-width: 600px;
+      margin: 0 auto 20px auto;
+      display: flex;
+    }
+    #noteText {
+      flex: 1;
+      padding: 10px;
+      font-size: 16px;
+    }
+    button {
+      padding: 10px 15px;
+      font-size: 16px;
+      background: #ffcc00;
+      border: none;
+      cursor: pointer;
+    }
+    #notesContainer {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+    }
+    .note {
+      background: #fff8b0;
+      border: 1px solid #ccc;
+      padding: 10px;
+      width: 200px;
+      min-height: 100px;
+      box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
+      position: relative;
+      word-wrap: break-word;
+    }
+    .deleteBtn {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      background: red;
+      color: white;
+      border: none;
+      padding: 5px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Sticky Notes App</h1>
+<div id="newNote">
+  <input type="text" id="noteText" placeholder="Write a note..." />
+  <button onclick="addNote()">Add</button>
+</div>
+
+<div id="notesContainer"></div>
+
+<script>
+  const notesContainer = document.getElementById('notesContainer');
+
+  function loadNotes() {
+    const notes = JSON.parse(localStorage.getItem('stickyNotes') || '[]');
+    notesContainer.innerHTML = '';
+    notes.forEach((note, index) => {
+      const noteEl = document.createElement('div');
+      noteEl.className = 'note';
+      noteEl.innerHTML = `
+        <button class="deleteBtn" onclick="deleteNote(${index})">X</button>
+        ${note}
+      `;
+      notesContainer.appendChild(noteEl);
+    });
+  }
+
+  function addNote() {
+    const noteText = document.getElementById('noteText').value.trim();
+    if (!noteText) return;
+    const notes = JSON.parse(localStorage.getItem('stickyNotes') || '[]');
+    notes.push(noteText);
+    localStorage.setItem('stickyNotes', JSON.stringify(notes));
+    document.getElementById('noteText').value = '';
+    loadNotes();
+  }
+
+  function deleteNote(index) {
+    const notes = JSON.parse(localStorage.getItem('stickyNotes') || '[]');
+    notes.splice(index, 1);
+    localStorage.setItem('stickyNotes', JSON.stringify(notes));
+    loadNotes();
+  }
+
+  window.onload = loadNotes;
+</script>
+
+</body>
+</html>
