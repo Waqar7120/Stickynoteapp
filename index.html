@@ -59,6 +59,34 @@
       cursor: pointer;
       font-size: 12px;
     }
+    .editBtn {
+      position: absolute;
+      top: 5px;
+      left: 5px;
+      background: blue;
+      color: white;
+      border: none;
+      padding: 5px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    .saveBtn {
+      position: absolute;
+      bottom: 5px;
+      right: 5px;
+      background: green;
+      color: white;
+      border: none;
+      padding: 5px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    .colorPicker {
+      position: absolute;
+      bottom: 5px;
+      left: 5px;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -73,6 +101,7 @@
 
 <script>
   const notesContainer = document.getElementById('notesContainer');
+  const noteTextInput = document.getElementById('noteText');
 
   function loadNotes() {
     const notes = JSON.parse(localStorage.getItem('stickyNotes') || '[]');
@@ -80,22 +109,62 @@
     notes.forEach((note, index) => {
       const noteEl = document.createElement('div');
       noteEl.className = 'note';
+      noteEl.setAttribute('role', 'region');
+      noteEl.setAttribute('aria-label', `Note ${index + 1}`);
+      noteEl.style.backgroundColor = note.color || '#fff8b0';
       noteEl.innerHTML = `
-        <button class="deleteBtn" onclick="deleteNote(${index})">X</button>
-        ${note}
+        <button class="deleteBtn" data-index="${index}" aria-label="Delete note">X</button>
+        <button class="editBtn" data-index="${index}" aria-label="Edit note">Edit</button>
+        <button class="saveBtn" data-index="${index}" aria-label="Save note">Save</button>
+        <input type="color" class="colorPicker" data-index="${index}" value="${note.color || '#fff8b0'}" aria-label="Pick color">
+        <div class="noteContent" contenteditable="false">${note.text}</div>
       `;
       notesContainer.appendChild(noteEl);
+    });
+
+    document.querySelectorAll('.deleteBtn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const index = e.target.dataset.index;
+        confirmDelete(index);
+      });
+    });
+
+    document.querySelectorAll('.editBtn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const index = e.target.dataset.index;
+        editNote(index);
+      });
+    });
+
+    document.querySelectorAll('.saveBtn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const index = e.target.dataset.index;
+        saveNote(index);
+      });
+    });
+
+    document.querySelectorAll('.colorPicker').forEach(picker => {
+      picker.addEventListener('input', (e) => {
+        const index = e.target.dataset.index;
+        changeNoteColor(index, e.target.value);
+      });
     });
   }
 
   function addNote() {
-    const noteText = document.getElementById('noteText').value.trim();
+    const noteText = noteTextInput.value.trim();
     if (!noteText) return;
     const notes = JSON.parse(localStorage.getItem('stickyNotes') || '[]');
-    notes.push(noteText);
+    notes.push({ text: noteText, color: '#fff8b0' });
     localStorage.setItem('stickyNotes', JSON.stringify(notes));
-    document.getElementById('noteText').value = '';
+    noteTextInput.value = '';
     loadNotes();
+  }
+
+  function confirmDelete(index) {
+    if (confirm('Are you sure you want to delete this note?')) {
+      deleteNote(index);
+    }
   }
 
   function deleteNote(index) {
@@ -105,6 +174,36 @@
     loadNotes();
   }
 
+  function editNote(index) {
+    const notes = JSON.parse(localStorage.getItem('stickyNotes') || '[]');
+    const noteEl = notesContainer.children[index];
+    const noteContent = noteEl.querySelector('.noteContent');
+    const isEditable = noteContent.getAttribute('contenteditable') === 'true';
+
+    if (!isEditable) {
+      noteContent.setAttribute('contenteditable', 'true');
+      noteContent.focus();
+    }
+  }
+
+  function saveNote(index) {
+    const notes = JSON.parse(localStorage.getItem('stickyNotes') || '[]');
+    const noteEl = notesContainer.children[index];
+    const noteContent = noteEl.querySelector('.noteContent');
+    notes[index].text = noteContent.textContent.trim();
+    noteContent.setAttribute('contenteditable', 'false');
+    localStorage.setItem('stickyNotes', JSON.stringify(notes));
+    loadNotes();
+  }
+
+  function changeNoteColor(index, color) {
+    const notes = JSON.parse(localStorage.getItem('stickyNotes') || '[]');
+    notes[index].color = color;
+    localStorage.setItem('stickyNotes', JSON.stringify(notes));
+    loadNotes();
+  }
+
+  document.querySelector('#newNote button').addEventListener('click', addNote);
   window.onload = loadNotes;
 </script>
 
